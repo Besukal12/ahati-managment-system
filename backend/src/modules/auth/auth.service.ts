@@ -147,10 +147,6 @@ export async function logout(token?: string): Promise<void> {
   });
 }
 
-export async function logoutAll(userId: string): Promise<void> {
-  await prisma.refreshSession.deleteMany({ where: { userId } });
-}
-
 export async function getCurrentUser(userId: string) {
   const user = await prisma.user.findUnique({
     where: { id: userId },

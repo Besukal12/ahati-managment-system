@@ -19,7 +19,6 @@ import {
   getCurrentUser,
   login,
   logout,
-  logoutAll,
   rotateRefreshToken,
 } from "./auth.service.js";
 
@@ -145,17 +144,6 @@ export async function LogoutHandler(
   assertTrustedOrigin(req);
   const token = req.cookies?.[refreshCookieName];
   await logout(typeof token === "string" ? token : undefined);
-  clearRefreshCookie(res);
-  res.status(204).end();
-}
-
-export async function LogoutAllHandler(
-  req: Request,
-  res: Response,
-): Promise<void> {
-  assertTrustedOrigin(req);
-  if (!req.auth) throw new UnauthorizedError("Authentication required");
-  await logoutAll(req.auth.userId);
   clearRefreshCookie(res);
   res.status(204).end();
 }
