@@ -9,6 +9,8 @@ import { AppError } from "./core/AppError.js";
 import { InternalError, PayloadTooLargeError } from "./core/CustomError.js";
 import authRouter from "./modules/auth/auth.route.js";
 import categoryRouter from "./modules/category/category.route.js";
+import customerRouter from "./modules/customer/customer.route.js";
+import proposalRouter from "./modules/proposal/proposal.route.js";
 import vendorRouter from "./modules/vendor/vendor.route.js";
 
 const app = express();
@@ -30,6 +32,8 @@ app.get("/health", (req, res) => {
 
 app.use("/api/auth", authRouter);
 app.use("/api/categories", categoryRouter);
+app.use("/api/customers", customerRouter);
+app.use("/api/proposals", proposalRouter);
 app.use("/api/vendors", vendorRouter);
 
 app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {

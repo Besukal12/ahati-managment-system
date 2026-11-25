@@ -3,20 +3,12 @@ import {
   BadRequestError,
   NotFoundError,
 } from "../../core/CustomError.js";
+import { hasPrismaCode } from "../../lib/prismaErrors.js";
 import type {
   CreateVendorInput,
   UpdateVendorInput,
   VendorQuery,
 } from "./vendor.schema.js";
-
-function hasPrismaCode(error: unknown, code: string): boolean {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    error.code === code
-  );
-}
 
 function assertPriceRange(
   priceMin: number | null | undefined,

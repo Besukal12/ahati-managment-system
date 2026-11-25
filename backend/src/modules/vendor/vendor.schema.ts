@@ -1,16 +1,9 @@
 import { z } from "zod";
-import { EmailSchema } from "../../lib/validation.js";
+import { EmailSchema, PhoneSchema } from "../../lib/validation.js";
 
 const VendorNameSchema = z.string().trim().min(1).max(160);
 const OptionalText = (max: number) =>
   z.string().trim().max(max).nullable().optional();
-const PhoneSchema = z
-  .string()
-  .trim()
-  .min(5)
-  .max(32)
-  .regex(/^\+?[\d\s().-]+$/)
-  .refine((value) => /\d/.test(value), "Phone number must contain digits");
 const PhotoSchema = z.url().max(2048);
 const PriceSchema = z
   .number()
