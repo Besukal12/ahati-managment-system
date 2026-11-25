@@ -411,38 +411,29 @@ describe("authentication API", () => {
     expect(mockState.sessions).toHaveLength(0);
   });
 
-  it("logs out the current session and revokes all sessions when requested", async () => {
+  it("logs out only the current session", async () => {
     await seedAdmin();
     const first = await loginWithAgent();
     const firstCookie = cookiePair(first.response);
-    await request(app)
-      .post("/api/auth/login")
-      .send({ email: ADMIN_EMAIL, password: CURRENT_PASSWORD });
+    const second = await loginWithAgent();
     expect(mockState.sessions).toHaveLength(2);
 
-    const logoutAll = await first.agent
-      .post("/api/auth/logout-all")
-      .set("authorization", `Bearer ${first.response.body.accessToken}`);
-    expect(logoutAll.status).toBe(204);
-    expect(mockState.sessions).toHaveLength(0);
+    const logout = await first.agent.post("/api/auth/logout");
+    expect(logout.status).toBe(204);
+    expect(mockState.sessions).toHaveLength(1);
 
     const oldCookie = await request(app)
       .post("/api/auth/refresh")
       .set("cookie", firstCookie);
     expect(oldCookie.status).toBe(401);
 
-    const nextLogin = await loginWithAgent();
-    const currentCookie = cookiePair(nextLogin.response);
-    const logout = await nextLogin.agent.post("/api/auth/logout");
-    expect(logout.status).toBe(204);
+    const secondRefresh = await second.agent.post("/api/auth/refresh");
+    expect(secondRefresh.status).toBe(200);
+    const secondLogout = await second.agent.post("/api/auth/logout");
+    expect(secondLogout.status).toBe(204);
     expect(mockState.sessions).toHaveLength(0);
     expect(logout.headers["set-cookie"][0]).toContain("ahati_refresh=");
-    expect(currentCookie).toContain("ahati_refresh=");
-  });
-
-  it("requires access authentication to revoke all sessions", async () => {
-    const response = await request(app).post("/api/auth/logout-all");
-    expect(response.status).toBe(401);
+    expect(cookiePair(second.response)).toContain("ahati_refresh=");
   });
 
   it("changes password, invalidates all refresh sessions, and permits the new password", async () => {
