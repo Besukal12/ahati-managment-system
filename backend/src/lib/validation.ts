@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { BadRequestError } from "../core/CustomError.js";
 
 export const EmailSchema = z
   .string()
@@ -13,3 +14,15 @@ export const PasswordSchema = z
   .refine((value) => Buffer.byteLength(value, "utf8") <= 72, {
     message: "Password must not exceed bcrypt's 72-byte limit",
   });
+
+export function validationError(
+  issues: { path: PropertyKey[]; message: string }[],
+): BadRequestError {
+  return new BadRequestError(
+    "Invalid request data",
+    issues.map((issue) => ({
+      field: issue.path.join("."),
+      message: issue.message,
+    })),
+  );
+}
