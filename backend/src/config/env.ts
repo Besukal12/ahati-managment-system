@@ -23,6 +23,7 @@ const envSchema = z.object({
   LOG_DIR: z.string().default("./logs"),
   JWT_ACCESS_SECRET: z.string().min(32),
   JWT_REFRESH_SECRET: z.string().min(32),
+  ADMIN_BOOTSTRAP_KEY: z.string().min(32).optional(),
   WEB_ORIGIN: z.url().optional(),
 });
 

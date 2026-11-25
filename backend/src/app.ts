@@ -7,6 +7,7 @@ import cookieParser from "cookie-parser";
 import Logger from "./core/Logger.js";
 import { AppError } from "./core/AppError.js";
 import { InternalError, PayloadTooLargeError } from "./core/CustomError.js";
+import authRouter from "./modules/auth/auth.route.js";
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.get("/health", (req, res) => {
   });
 });
 
+app.use("/api/auth", authRouter);
 
 app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof AppError) {
