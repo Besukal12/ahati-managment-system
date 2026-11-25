@@ -138,7 +138,7 @@ model Proposal {
   status     ProposalStatus @default(DRAFT)
   validUntil DateTime?
 
-  shareToken String? @unique @default(uuid())
+  shareToken String? @unique
 
   items          ProposalItem[]
   changeRequests ChangeRequest[]

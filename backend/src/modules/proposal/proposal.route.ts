@@ -5,7 +5,11 @@ import {
   CreateProposalHandler,
   DeleteProposalHandler,
   GetProposalHandler,
+  GetProposalChangesHandler,
+  GetProposalSelectionsHandler,
   ListProposalsHandler,
+  RevokeProposalShareHandler,
+  ShareProposalHandler,
   RemoveProposalItemHandler,
   UpdateProposalHandler,
   UpdateProposalItemHandler,
@@ -16,6 +20,10 @@ const proposalRouter = Router();
 proposalRouter.use(requireAuth);
 proposalRouter.get("/", ListProposalsHandler);
 proposalRouter.post("/", CreateProposalHandler);
+proposalRouter.get("/:id/selections", GetProposalSelectionsHandler);
+proposalRouter.get("/:id/changes", GetProposalChangesHandler);
+proposalRouter.post("/:id/share", ShareProposalHandler);
+proposalRouter.delete("/:id/share", RevokeProposalShareHandler);
 proposalRouter.get("/:id", GetProposalHandler);
 proposalRouter.patch("/:id", UpdateProposalHandler);
 proposalRouter.delete("/:id", DeleteProposalHandler);

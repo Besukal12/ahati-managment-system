@@ -1,4 +1,6 @@
+import { randomBytes } from "node:crypto";
 import { prisma } from "../../config/prisma.js";
+import { env } from "../../config/env.js";
 import {
   Prisma,
   type CalculationMethod,
@@ -19,6 +21,19 @@ import type {
 } from "./proposal.schema.js";
 
 const proposalDetails = {
+  id: true,
+  customerId: true,
+  title: true,
+  eventType: true,
+  eventDate: true,
+  location: true,
+  guestCount: true,
+  budget: true,
+  notes: true,
+  status: true,
+  validUntil: true,
+  createdAt: true,
+  updatedAt: true,
   customer: {
     select: { id: true, fullName: true, phone: true, email: true },
   },
@@ -28,14 +43,27 @@ const proposalDetails = {
       pricingType: true,
     },
   },
-} satisfies Prisma.ProposalInclude;
+} satisfies Prisma.ProposalSelect;
 
 const proposalListInclude = {
+  id: true,
+  customerId: true,
+  title: true,
+  eventType: true,
+  eventDate: true,
+  location: true,
+  guestCount: true,
+  budget: true,
+  notes: true,
+  status: true,
+  validUntil: true,
+  createdAt: true,
+  updatedAt: true,
   customer: {
     select: { id: true, fullName: true, phone: true, email: true },
   },
   items: { select: { totalPrice: true } },
-} satisfies Prisma.ProposalInclude;
+} satisfies Prisma.ProposalSelect;
 
 function sumItems(items: { totalPrice: Prisma.Decimal }[]): Prisma.Decimal {
   return items.reduce(
@@ -75,6 +103,7 @@ function proposalCreateData(
 ): Prisma.ProposalUncheckedCreateInput {
   return {
     ...data,
+    shareToken: null,
     budget:
       data.budget == null ? data.budget : new Prisma.Decimal(data.budget),
   };
@@ -165,7 +194,7 @@ export async function listProposals(query: ProposalQuery) {
   const [proposals, total] = await Promise.all([
     prisma.proposal.findMany({
       where,
-      include: proposalListInclude,
+      select: proposalListInclude,
       orderBy: { [query.sortBy]: query.sortOrder },
       skip: (query.page - 1) * query.limit,
       take: query.limit,
@@ -193,7 +222,7 @@ export async function listProposals(query: ProposalQuery) {
 export async function getProposal(id: string) {
   const proposal = await prisma.proposal.findUnique({
     where: { id },
-    include: proposalDetails,
+    select: proposalDetails,
   });
   if (!proposal) throw new NotFoundError("Proposal not found");
   return withTotal(proposal);
@@ -209,12 +238,60 @@ export async function createProposal(data: CreateProposalInput) {
   try {
     const proposal = await prisma.proposal.create({
       data: proposalCreateData(data),
-      include: proposalDetails,
+      select: proposalDetails,
     });
     return withTotal(proposal);
   } catch (error) {
     if (hasPrismaCode(error, "P2003"))
       throw new NotFoundError("Customer not found");
+    throw error;
+  }
+}
+
+export async function shareProposal(id: string) {
+  const proposal = await prisma.proposal.findUnique({
+    where: { id },
+    select: { id: true, status: true, validUntil: true },
+  });
+  if (!proposal) throw new NotFoundError("Proposal not found");
+  if (
+    proposal.status !== "SENT" ||
+    (proposal.validUntil !== null && proposal.validUntil <= new Date())
+  )
+    throw new ConflictError("Only unexpired sent proposals can be shared");
+
+  const token = randomBytes(32).toString("base64url");
+  try {
+    await prisma.proposal.update({
+      where: { id, status: "SENT" },
+      data: { shareToken: token },
+      select: { id: true },
+    });
+  } catch (error) {
+    if (hasPrismaCode(error, "P2025"))
+      throw new ConflictError("Proposal is no longer available for sharing");
+    if (hasPrismaCode(error, "P2002"))
+      throw new ConflictError("Unable to create a unique proposal link");
+    throw error;
+  }
+
+  const path = `/proposal/${token}`;
+  return {
+    token,
+    url: env.WEB_ORIGIN ? new URL(path, env.WEB_ORIGIN).toString() : path,
+  };
+}
+
+export async function revokeProposalShare(id: string): Promise<void> {
+  try {
+    await prisma.proposal.update({
+      where: { id },
+      data: { shareToken: null },
+      select: { id: true },
+    });
+  } catch (error) {
+    if (hasPrismaCode(error, "P2025"))
+      throw new NotFoundError("Proposal not found");
     throw error;
   }
 }
@@ -263,7 +340,7 @@ export async function updateProposal(id: string, data: UpdateProposalInput) {
       const proposal = await tx.proposal.update({
         where: { id, status: current.status },
         data: proposalUpdateData(data),
-        include: proposalDetails,
+        select: proposalDetails,
       });
 
       if (guestCountChanged && nextGuestCount !== null) {
@@ -286,7 +363,7 @@ export async function updateProposal(id: string, data: UpdateProposalInput) {
 
       const updated = await tx.proposal.findUnique({
         where: { id: proposal.id },
-        include: proposalDetails,
+        select: proposalDetails,
       });
       if (!updated) throw new NotFoundError("Proposal not found");
       return withTotal(updated);

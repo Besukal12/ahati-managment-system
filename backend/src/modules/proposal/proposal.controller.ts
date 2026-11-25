@@ -17,9 +17,15 @@ import {
   getProposal,
   listProposals,
   removeProposalItem,
+  revokeProposalShare,
+  shareProposal,
   updateProposal,
   updateProposalItem,
 } from "./proposal.service.js";
+import {
+  getProposalSelections,
+  listProposalChangeRequests,
+} from "./review.service.js";
 
 function parseId(value: unknown, label: string): string {
   const parsed = ProposalIdSchema.safeParse(value);
@@ -81,6 +87,45 @@ export async function DeleteProposalHandler(
 ): Promise<void> {
   await deleteProposal(parseId(req.params.id, "proposal"));
   res.status(204).end();
+}
+
+export async function ShareProposalHandler(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  res
+    .status(200)
+    .json(await shareProposal(parseId(req.params.id, "proposal")));
+}
+
+export async function RevokeProposalShareHandler(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  await revokeProposalShare(parseId(req.params.id, "proposal"));
+  res.status(204).end();
+}
+
+export async function GetProposalSelectionsHandler(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  res
+    .status(200)
+    .json(
+      await getProposalSelections(parseId(req.params.id, "proposal")),
+    );
+}
+
+export async function GetProposalChangesHandler(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  res
+    .status(200)
+    .json(
+      await listProposalChangeRequests(parseId(req.params.id, "proposal")),
+    );
 }
 
 export async function AddProposalItemHandler(
