@@ -8,6 +8,12 @@ import Logger from "./core/Logger.js";
 import { AppError } from "./core/AppError.js";
 import { InternalError, PayloadTooLargeError } from "./core/CustomError.js";
 import authRouter from "./modules/auth/auth.route.js";
+import categoryRouter from "./modules/category/category.route.js";
+import customerRouter from "./modules/customer/customer.route.js";
+import changeRouter from "./modules/changes/change.route.js";
+import proposalRouter from "./modules/proposal/proposal.route.js";
+import sharedProposalRouter from "./modules/proposal/shared-proposal.route.js";
+import vendorRouter from "./modules/vendor/vendor.route.js";
 
 const app = express();
 
@@ -27,6 +33,12 @@ app.get("/health", (req, res) => {
 });
 
 app.use("/api/auth", authRouter);
+app.use("/api/categories", categoryRouter);
+app.use("/api/customers", customerRouter);
+app.use("/api/proposals", proposalRouter);
+app.use("/api/shared/proposals", sharedProposalRouter);
+app.use("/api/changes", changeRouter);
+app.use("/api/vendors", vendorRouter);
 
 app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
   if (err instanceof AppError) {
